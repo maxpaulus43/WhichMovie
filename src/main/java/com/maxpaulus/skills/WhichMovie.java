@@ -23,28 +23,39 @@ import java.util.stream.Collectors;
 
 public class WhichMovie implements RequestStreamHandler {
     private final MySerializer SERIALIZER = new MySerializer();
-    private final String TMDB_URL = "https://api.themoviedb.org/3";
+    private final String TMDB_URL = "https://api.themoviedb.org";
     private final String TMDB_API_KEY = System.getenv("TMDB_API_KEY");
 
     private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
 
+    private static final ResponseEnvelope EMPTY_RESPONSE = ResponseEnvelope.builder()
+            .withResponse(Response.builder()
+                    .withOutputSpeech(PlainTextOutputSpeech.builder()
+                            .withText("No movies are available at this time")
+                            .build())
+                    .withShouldEndSession(true)
+                    .build())
+            .build();
+
     @Override
     public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
-        RequestEnvelope request = SERIALIZER.deserialize(input, RequestEnvelope.class);
+        //RequestEnvelope request = SERIALIZER.deserialize(input, RequestEnvelope.class); todo
 
         Movie movie = getRandomMovie();
 
-        ResponseEnvelope response = ResponseEnvelope.builder()
-                .putSessionAttributesItem("movie_id", 123456) // todo
-                .withResponse(Response.builder()
-                        .withOutputSpeech(PlainTextOutputSpeech.builder()
-                                .withText(movie == null
-                                        ? "No movies are available at this time"
-                                        : "I recommend " + movie.getTitle())
-                                .build())
-                        .withShouldEndSession(false)
-                        .build())
-                .build();
+        ResponseEnvelope response = EMPTY_RESPONSE;
+
+        if (movie != null) {
+            response = ResponseEnvelope.builder()
+                    .putSessionAttributesItem("movie_id", movie.getId())
+                    .withResponse(Response.builder()
+                            .withOutputSpeech(PlainTextOutputSpeech.builder()
+                                    .withText("I recommend " + movie.getTitle())
+                                    .build())
+                            .withShouldEndSession(false)
+                            .build())
+                    .build();
+        }
 
         SERIALIZER.serialize(response, output);
     }
@@ -52,7 +63,7 @@ public class WhichMovie implements RequestStreamHandler {
     private Movie getRandomMovie(Genre... genres) {
         List<Movie> movies = getMovies(genres);
 
-        if(movies == null || movies.isEmpty()) {
+        if (movies == null || movies.isEmpty()) {
             return null;
         }
 
@@ -60,9 +71,9 @@ public class WhichMovie implements RequestStreamHandler {
         return movies.get(i);
     }
 
-    public List<Movie> getMovies(Genre... genres) {
+    private List<Movie> getMovies(Genre... genres) {
         if (genres.length == 0) {
-            genres = new Genre[] { Genre.ANY };
+            genres = new Genre[]{Genre.ANY};
         }
 
         MovieRequest movieRequest = new MovieRequest();
@@ -71,20 +82,15 @@ public class WhichMovie implements RequestStreamHandler {
 
         try {
             URI uri = new URIBuilder(TMDB_URL)
-                    .setPath("/movie/popular")
+                    .setPath("/3/movie/popular")
                     .addParameter("api_key", TMDB_API_KEY)
+                    .addParameter("page", String.valueOf(new Random().nextInt(10))) // top 10 pages
                     .build();
-
-            System.out.println(uri.toString());
 
             CloseableHttpResponse response = HTTP_CLIENT.execute(new HttpGet(uri));
 
             InputStream in = response.getEntity().getContent();
-
-            System.out.println(new BufferedReader(new InputStreamReader(in)).lines().collect(Collectors.joining("\n")));
-
-//            movies = SERIALIZER.deserialize(, MovieResponse.class).getMovies();
-
+            movies = SERIALIZER.deserialize(in, MovieResponse.class).getMovies();
             in.close();
 
         } catch (URISyntaxException e) {
