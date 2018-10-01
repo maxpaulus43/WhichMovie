@@ -1,6 +1,5 @@
 package com.maxpaulus.skills;
 
-import com.amazon.ask.model.RequestEnvelope;
 import com.amazon.ask.model.Response;
 import com.amazon.ask.model.ResponseEnvelope;
 import com.amazon.ask.model.ui.PlainTextOutputSpeech;
@@ -13,13 +12,14 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 public class WhichMovie implements RequestStreamHandler {
     private final MySerializer SERIALIZER = new MySerializer();
@@ -52,7 +52,7 @@ public class WhichMovie implements RequestStreamHandler {
                             .withOutputSpeech(PlainTextOutputSpeech.builder()
                                     .withText("I recommend " + movie.getTitle())
                                     .build())
-                            .withShouldEndSession(false)
+                            .withShouldEndSession(true)
                             .build())
                     .build();
         }
