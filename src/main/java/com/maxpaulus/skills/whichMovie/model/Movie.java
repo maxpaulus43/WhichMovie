@@ -1,4 +1,4 @@
-package com.maxpaulus.skills;
+package com.maxpaulus.skills.whichMovie.model;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;

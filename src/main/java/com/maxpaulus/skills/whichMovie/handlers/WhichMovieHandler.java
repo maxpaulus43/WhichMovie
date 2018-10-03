@@ -1,10 +1,18 @@
-package com.maxpaulus.skills;
+package com.maxpaulus.skills.whichMovie.handlers;
 
+import com.amazon.ask.dispatcher.request.handler.HandlerInput;
+import com.amazon.ask.dispatcher.request.handler.RequestHandler;
+import com.amazon.ask.model.Intent;
 import com.amazon.ask.model.Response;
 import com.amazon.ask.model.ResponseEnvelope;
+import com.amazon.ask.model.services.Serializer;
 import com.amazon.ask.model.ui.PlainTextOutputSpeech;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
+import com.amazon.ask.request.Predicates;
+import com.amazon.ask.util.JacksonSerializer;
+import com.maxpaulus.skills.whichMovie.model.Genre;
+import com.maxpaulus.skills.whichMovie.model.Movie;
+import com.maxpaulus.skills.whichMovie.model.MovieRequest;
+import com.maxpaulus.skills.whichMovie.model.MovieResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,50 +22,31 @@ import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
-public class WhichMovie implements RequestStreamHandler {
-    private final MySerializer SERIALIZER = new MySerializer();
+public class WhichMovieHandler implements RequestHandler {
     private final String TMDB_URL = "https://api.themoviedb.org";
     private final String TMDB_API_KEY = System.getenv("TMDB_API_KEY");
-
     private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
-
-    private static final ResponseEnvelope EMPTY_RESPONSE = ResponseEnvelope.builder()
-            .withResponse(Response.builder()
-                    .withOutputSpeech(PlainTextOutputSpeech.builder()
-                            .withText("No movies are available at this time")
-                            .build())
-                    .withShouldEndSession(true)
-                    .build())
-            .build();
+    private static final Serializer serializer = new JacksonSerializer();
 
     @Override
-    public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
-        //RequestEnvelope request = SERIALIZER.deserialize(input, RequestEnvelope.class); todo
+    public boolean canHandle(HandlerInput input) {
+        return input.matches(Predicates.intentName("which_movie"));
+    }
 
-        Movie movie = getRandomMovie();
-
-        ResponseEnvelope response = EMPTY_RESPONSE;
-
-        if (movie != null) {
-            response = ResponseEnvelope.builder()
-                    .putSessionAttributesItem("movie_id", movie.getId())
-                    .withResponse(Response.builder()
-                            .withOutputSpeech(PlainTextOutputSpeech.builder()
-                                    .withText("I recommend " + movie.getTitle())
-                                    .build())
-                            .withShouldEndSession(true)
-                            .build())
-                    .build();
-        }
-
-        SERIALIZER.serialize(response, output);
+    @Override
+    public Optional<Response> handle(HandlerInput input) {
+        return input.getResponseBuilder()
+                .addElicitSlotDirective("genre", Intent.builder()
+                        .build())
+                .withShouldEndSession(false)
+                .build();
     }
 
     private Movie getRandomMovie(Genre... genres) {
@@ -90,7 +79,7 @@ public class WhichMovie implements RequestStreamHandler {
             CloseableHttpResponse response = HTTP_CLIENT.execute(new HttpGet(uri));
 
             InputStream in = response.getEntity().getContent();
-            movies = SERIALIZER.deserialize(in, MovieResponse.class).getMovies();
+            movies = serializer.deserialize(in, MovieResponse.class).getMovies();
             in.close();
 
         } catch (URISyntaxException e) {
@@ -105,5 +94,16 @@ public class WhichMovie implements RequestStreamHandler {
         }
 
         return movies;
+    }
+
+    private ResponseEnvelope emptyResponseEnvelope() {
+        return ResponseEnvelope.builder()
+                .withResponse(Response.builder()
+                        .withOutputSpeech(PlainTextOutputSpeech.builder()
+                                .withText("No movies are available at this time")
+                                .build())
+                        .withShouldEndSession(true)
+                        .build())
+                .build();
     }
 }
