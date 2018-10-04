@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "session": {
+    "new": true,
+    "sessionId": "test_session_id",
+    "application": {
+      "applicationId": "amzn1.ask.skill.35dcc72a-673f-4d47-9172-2a37ceb7d6ba"
+    },
+    "user": {
+      "userId": "test_user_id"
+    }
+  },
+  "context": {
+    "System": {
+      "application": {
+        "applicationId": "amzn1.ask.skill.35dcc72a-673f-4d47-9172-2a37ceb7d6ba"
+      },
+      "user": {
+        "userId": "test_user_id"
+      },
+      "device": {
+        "deviceId": "test_device_id",
+        "supportedInterfaces": {}
+      },
+      "apiEndpoint": "https://api.amazonalexa.com",
+      "apiAccessToken": "test_api_access_token"
+    }
+  },
+  "request": {
+    "type": "IntentRequest",
+    "requestId": "test_request_id",
+    "timestamp": "2018-10-03T22:27:29Z",
+    "locale": "en-US",
+    "intent": {
+      "name": "which_movie",
+      "confirmationStatus": "NONE",
+      "slots": {
+        "genre": {
+          "name": "genre",
+          "confirmationStatus": "NONE"
+        }
+      }
+    },
+    "dialogState": "STARTED"
+  }
+}

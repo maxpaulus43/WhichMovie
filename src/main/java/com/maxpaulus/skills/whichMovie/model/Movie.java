@@ -17,6 +17,10 @@ public class Movie {
         return title;
     }
 
+    public String getOverview() {
+        return overview;
+    }
+
     public int getId() {
         return id;
     }

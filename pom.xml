@@ -8,24 +8,41 @@
     <artifactId>WhichMovie</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+
+        <ask.sdk.version>2.6.0</ask.sdk.version>
+        <junitparams.version>1.1.1</junitparams.version>
+    </properties>
+
     <dependencies>
 
         <dependency>
             <groupId>com.amazon.alexa</groupId>
             <artifactId>ask-sdk-core</artifactId>
-            <version>2.6.0</version>
+            <version>${ask.sdk.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazon.alexa</groupId>
             <artifactId>ask-sdk-lambda-support</artifactId>
-            <version>2.6.0</version>
+            <version>${ask.sdk.version}</version>
         </dependency>
 
         <dependency>
             <groupId>com.amazon.alexa</groupId>
             <artifactId>ask-sdk-apache-client</artifactId>
-            <version>2.6.0</version>
+            <version>${ask.sdk.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/pl.pragmatists/JUnitParams -->
+        <dependency>
+            <groupId>pl.pragmatists</groupId>
+            <artifactId>JUnitParams</artifactId>
+            <version>${junitparams.version}</version>
+            <scope>test</scope>
         </dependency>
 
 

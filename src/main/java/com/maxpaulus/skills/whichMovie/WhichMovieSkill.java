@@ -6,8 +6,8 @@ import com.amazon.ask.dispatcher.request.handler.impl.DefaultHandlerAdapter;
 import com.amazon.ask.dispatcher.request.handler.impl.DefaultRequestHandlerChain;
 import com.amazon.ask.dispatcher.request.mapper.impl.DefaultRequestMapper;
 import com.maxpaulus.skills.whichMovie.handlers.ErrorHandler;
-import com.maxpaulus.skills.whichMovie.handlers.WhichGenreHandler;
 import com.maxpaulus.skills.whichMovie.handlers.WhichMovieHandler;
+import org.apache.http.impl.client.HttpClients;
 
 public final class WhichMovieSkill extends Skill {
 
@@ -22,12 +22,12 @@ public final class WhichMovieSkill extends Skill {
                 .withSkillId(SKILL_ID)
                 .addHandlerAdapter(new DefaultHandlerAdapter())
                 .addRequestMapper(DefaultRequestMapper.builder()
+//                        .addRequestHandlerChain(DefaultRequestHandlerChain.builder()
+//                                .withRequestHandler(new WhichGenreHandler())
+//                                .addExceptionHandler(new ErrorHandler())
+//                                .build())
                         .addRequestHandlerChain(DefaultRequestHandlerChain.builder()
-                                .withRequestHandler(new WhichGenreHandler())
-                                .addExceptionHandler(new ErrorHandler())
-                                .build())
-                        .addRequestHandlerChain(DefaultRequestHandlerChain.builder()
-                                .withRequestHandler(new WhichMovieHandler())
+                                .withRequestHandler(new WhichMovieHandler(HttpClients.createDefault()))
                                 .addExceptionHandler(new ErrorHandler())
                                 .build())
                         .build())

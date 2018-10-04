@@ -4,24 +4,27 @@ import com.amazon.ask.dispatcher.request.handler.HandlerInput;
 import com.amazon.ask.dispatcher.request.handler.RequestHandler;
 import com.amazon.ask.model.IntentRequest;
 import com.amazon.ask.model.Response;
-import com.amazon.ask.model.Slot;
 import com.amazon.ask.model.services.Serializer;
 import com.amazon.ask.util.JacksonSerializer;
 import com.maxpaulus.skills.whichMovie.model.Genre;
 import com.maxpaulus.skills.whichMovie.model.Movie;
 import com.maxpaulus.skills.whichMovie.model.MovieResponse;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static com.amazon.ask.request.Predicates.intentName;
@@ -30,34 +33,52 @@ public class WhichMovieHandler implements RequestHandler {
 
     private static final String TMDB_URL = "https://api.themoviedb.org";
     private static final String TMDB_API_KEY = System.getenv("TMDB_API_KEY");
-    private static final CloseableHttpClient HTTP_CLIENT = HttpClients.createDefault();
     private static final Serializer serializer = new JacksonSerializer();
+
+    private final ThreadLocalRandom random;
+    private final HttpClient httpClient;
+
+    public WhichMovieHandler(HttpClient httpClient) {
+        this.httpClient = httpClient;
+        this.random = ThreadLocalRandom.current();
+    }
 
     @Override
     public boolean canHandle(HandlerInput input) {
-        return input.matches(intentName("which_movie").and(this::hasSlots));
+        return input.matches(intentName("which_movie"));
     }
 
     @Override
     public Optional<Response> handle(HandlerInput input) {
 
-        Slot genreSlot = ((IntentRequest) (input.getRequestEnvelope().getRequest()))
-                .getIntent().getSlots().get("genre");
+        if (!hasGenres(input)) {
+            return input.getResponseBuilder()
+                    .addDelegateDirective(((IntentRequest) input.getRequestEnvelope().getRequest()).getIntent())
+                    .build();
+        }
 
-        Movie movie = getRandomMovie(genreSlot.getValue());
+        String[] genres = ((IntentRequest) (input.getRequestEnvelope().getRequest()))
+                .getIntent()
+                .getSlots()
+                .get("genre")
+                .getValue()
+                .split(" ");
+
+        Movie movie = getRandomMovie(genres);
 
         return input.getResponseBuilder()
                 .withSpeech(movie == null
-                        ? "I can't find any movies, please try again"
+                        ? "I can't find any movies at this time, please try again"
                         : "I recommend " + movie.getTitle())
                 .withShouldEndSession(true)
                 .build();
     }
 
-    private boolean hasSlots(HandlerInput input) {
-        Map<String, Slot> slots =
-                ((IntentRequest) input.getRequestEnvelope().getRequest()).getIntent().getSlots();
-        return slots != null && !slots.isEmpty();
+    private boolean hasGenres(HandlerInput i) {
+        return i.getRequestEnvelope().getRequest() instanceof IntentRequest
+                && ((IntentRequest) i.getRequestEnvelope().getRequest()).getIntent().getSlots() != null
+                && ((IntentRequest) i.getRequestEnvelope().getRequest()).getIntent().getSlots().containsKey("genre")
+                && ((IntentRequest) i.getRequestEnvelope().getRequest()).getIntent().getSlots().get("genre").getValue() != null;
     }
 
     private Movie getRandomMovie(String... genres) {
@@ -67,13 +88,13 @@ public class WhichMovieHandler implements RequestHandler {
             return null;
         }
 
-        int i = new Random().nextInt(movies.size());
+        int i = random.nextInt(movies.size());
         return movies.get(i);
     }
 
     private List<Movie> getMovies(String... genres) {
         if (genres.length == 0) {
-            genres = new String[]{""}; // todo find a better default genre
+            genres = new String[]{""};
         }
 
         List<Movie> movies = new ArrayList<>();
@@ -87,13 +108,12 @@ public class WhichMovieHandler implements RequestHandler {
                     .addParameter("with_genres", Arrays.stream(genres)
                             .map(Genre::fromString)
                             .filter(Objects::nonNull)
-                            .map(g -> g.id)
-                            .map(String::valueOf)
+                            .map(g -> String.valueOf(g.id))
                             .collect(Collectors.joining(",")))
-                    .addParameter("page", String.valueOf(new Random().nextInt(10))) // top 10 pages
+                    .addParameter("page", String.valueOf(random.nextInt(10))) // top 10 pages
                     .build();
 
-            CloseableHttpResponse response = HTTP_CLIENT.execute(new HttpGet(uri));
+            HttpResponse response = httpClient.execute(new HttpGet(uri));
 
             InputStream in = response.getEntity().getContent();
             movies = serializer.deserialize(in, MovieResponse.class).getMovies();
@@ -112,5 +132,4 @@ public class WhichMovieHandler implements RequestHandler {
 
         return movies;
     }
-
 }
