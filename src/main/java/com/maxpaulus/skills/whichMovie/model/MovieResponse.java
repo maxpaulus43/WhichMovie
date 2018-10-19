@@ -7,12 +7,24 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MovieResponse {
-    @JsonProperty("page")
-    int page;
-    @JsonProperty("results")
-    List<Movie> movies;
+    private int page;
+    private List<Movie> movies;
 
     public List<Movie> getMovies() {
         return movies;
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    @JsonProperty("page")
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+    @JsonProperty("results")
+    public void setMovies(List<Movie> movies) {
+        this.movies = movies;
     }
 }

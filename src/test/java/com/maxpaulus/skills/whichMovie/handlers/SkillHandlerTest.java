@@ -1,10 +1,9 @@
 package com.maxpaulus.skills.whichMovie.handlers;
 
-import com.amazon.ask.model.ResponseEnvelope;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import junitparams.FileParameters;
 import junitparams.JUnitParamsRunner;
 import junitparams.mappers.DataMapper;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -23,7 +22,10 @@ public class SkillHandlerTest {
     @Test
     @FileParameters(value = "src/test/resources/test_requests/ask_which_movie_is_good.json", mapper = FileToStringMapper.class)
     public void testWhichMovieIsGood(String input) throws IOException {
-        handler.handleRequest(new ByteArrayInputStream(input.getBytes()), System.out, null);
+        ByteArrayOutputStream o = new ByteArrayOutputStream();
+        handler.handleRequest(new ByteArrayInputStream(input.getBytes()), o, null);
+        System.out.println(o.toString());
+        Assert.assertFalse(o.toString().isEmpty());
     }
 
     @Test
@@ -31,7 +33,19 @@ public class SkillHandlerTest {
     public void testActionGenre(String input) throws IOException {
         ByteArrayOutputStream o = new ByteArrayOutputStream();
         handler.handleRequest(new ByteArrayInputStream(input.getBytes()), o, null);
-        new ObjectMapper().readValue(o.toString(), ResponseEnvelope.class);
+        System.out.println(o.toString());
+        Assert.assertFalse(o.toString().isEmpty());
+
+    }
+
+    @Test
+    @FileParameters(value = "src/test/resources/test_requests/launch_request.json", mapper = FileToStringMapper.class)
+    public void testLaunchRequest(String input) throws IOException {
+        ByteArrayOutputStream o = new ByteArrayOutputStream();
+        handler.handleRequest(new ByteArrayInputStream(input.getBytes()), o, null);
+        System.out.println(o.toString());
+        Assert.assertFalse(o.toString().isEmpty());
+
     }
 
     public static final class FileToStringMapper implements DataMapper {

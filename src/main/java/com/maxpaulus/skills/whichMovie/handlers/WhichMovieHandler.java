@@ -3,6 +3,7 @@ package com.maxpaulus.skills.whichMovie.handlers;
 import com.amazon.ask.dispatcher.request.handler.HandlerInput;
 import com.amazon.ask.dispatcher.request.handler.RequestHandler;
 import com.amazon.ask.model.IntentRequest;
+import com.amazon.ask.model.LaunchRequest;
 import com.amazon.ask.model.Response;
 import com.amazon.ask.model.services.Serializer;
 import com.amazon.ask.util.JacksonSerializer;
@@ -28,11 +29,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static com.amazon.ask.request.Predicates.intentName;
+import static com.amazon.ask.request.Predicates.requestType;
 
 public class WhichMovieHandler implements RequestHandler {
 
     private static final String TMDB_URL = "https://api.themoviedb.org";
     private static final String TMDB_API_KEY = System.getenv("TMDB_API_KEY");
+    private static final int PAGE_LIMIT = 10;
     private static final Serializer serializer = new JacksonSerializer();
 
     private final ThreadLocalRandom random;
@@ -45,7 +48,8 @@ public class WhichMovieHandler implements RequestHandler {
 
     @Override
     public boolean canHandle(HandlerInput input) {
-        return input.matches(intentName("which_movie"));
+        return input.matches(requestType(LaunchRequest.class)
+                .or(intentName("which_movie")));
     }
 
     @Override
@@ -69,7 +73,7 @@ public class WhichMovieHandler implements RequestHandler {
         return input.getResponseBuilder()
                 .withSpeech(movie == null
                         ? "I can't find any movies at this time, please try again"
-                        : "I recommend " + movie.getTitle())
+                        : "I recommend " + movie.getTitle() + ". Here's a brief summary. " + movie.getOverview())
                 .withShouldEndSession(true)
                 .build();
     }
@@ -110,7 +114,7 @@ public class WhichMovieHandler implements RequestHandler {
                             .filter(Objects::nonNull)
                             .map(g -> String.valueOf(g.id))
                             .collect(Collectors.joining(",")))
-                    .addParameter("page", String.valueOf(random.nextInt(10))) // top 10 pages
+                    .addParameter("page", String.valueOf(random.nextInt(PAGE_LIMIT)))
                     .build();
 
             HttpResponse response = httpClient.execute(new HttpGet(uri));

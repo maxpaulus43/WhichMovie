@@ -6,22 +6,34 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Movie {
-    @JsonProperty("title")
-    String title;
-    @JsonProperty("overview")
-    String overview;
-    @JsonProperty("id")
-    int id;
+    private String title;
+    private String overview;
+    private int id;
 
     public String getTitle() {
         return title;
+    }
+
+    @JsonProperty("title")
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getOverview() {
         return overview;
     }
 
+    @JsonProperty("overview")
+    public void setOverview(String overview) {
+        this.overview = overview;
+    }
+
     public int getId() {
         return id;
+    }
+
+    @JsonProperty("id")
+    public void setId(int id) {
+        this.id = id;
     }
 }

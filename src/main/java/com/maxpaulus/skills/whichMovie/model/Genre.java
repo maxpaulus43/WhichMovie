@@ -26,8 +26,8 @@ public enum Genre {
     WAR(10752),
     WESTERN(37);
 
-    private static Map<String, Genre> NAME_MAP = Arrays.stream(values())
-            .collect(Collectors.toMap(g -> g.toString().replace("_", " "), g -> g));
+    public static final  Map<String, Genre> NAME_MAP = Arrays.stream(values())
+            .collect(Collectors.toMap(Genre::toString, g -> g));
 
     public final int id;
 
@@ -35,5 +35,10 @@ public enum Genre {
 
     public static Genre fromString(String genreString) {
         return genreString == null || genreString.isEmpty() ? null : NAME_MAP.get(genreString.toUpperCase());
+    }
+
+    @Override
+    public String toString() {
+        return super.toString().replace("_", " ");
     }
 }
